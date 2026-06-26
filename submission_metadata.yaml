@@ -1,0 +1,49 @@
+team_name: "SmartHireAI"
+
+primary_contact:
+  name: "Team Lead"
+  email: "primary@example.com"
+  phone: "+91-XXXXXXXXXX"
+
+team_members:
+  - name: "Team Lead"
+    email: "primary@example.com"
+    role: "ML Engineer"
+
+github_repo: "https://github.com/YOUR_USERNAME/SmartHireAI"
+sandbox_link: "https://huggingface.co/spaces/YOUR_USERNAME/redrob-ranker"
+
+reproduce_command: "python rank.py --model fast --candidates ./data/[PUB] India_runs_data_and_ai_challenge/[PUB] India_runs_data_and_ai_challenge/India_runs_data_and_ai_challenge/candidates.jsonl --out ./output/final_submission.csv"
+
+compute:
+  platform: "Windows 11"
+  cpu_cores: 8
+  ram_gb: 16
+  python_version: "3.11"
+  os: "Windows 11"
+  uses_gpu_for_inference: false
+  has_network_during_ranking: false
+  pre_computation_required: false
+  pre_computation_time_minutes: 0
+
+ai_tools_used:
+  - "Cursor"
+
+ai_usage_summary: |
+  Used Cursor for architecture review, bug fixes, and pipeline implementation.
+  No candidate data was sent to external LLM APIs during ranking.
+
+methodology_summary: |
+  Two-stage pipeline: rule-based fast filter on AI titles/skills/career retrieval
+  signals, then BGE-small semantic matching against a compressed JD query, combined
+  with hybrid features for retrieval/ranking experience, vector DB exposure,
+  evaluation metrics, product-company history, consulting penalties, Redrob
+  behavioral signals (assessments, activity, response rate), and honeypot traps.
+  Final top 100 is tie-broken by candidate_id ascending.
+
+declarations:
+  read_submission_spec: true
+  code_is_original_work: true
+  no_collusion: true
+  honeypot_check_done: true
+  reproduction_tested: true
