@@ -1,3 +1,15 @@
+---
+title: SmartHireAI
+emoji: 🤖
+colorFrom: indigo
+colorTo: green
+sdk: streamlit
+sdk_version: 1.39.0
+app_file: app.py
+pinned: false
+license: mit
+---
+
 # SmartHireAI Candidate Ranker
 
 SmartHireAI is an end-to-end intelligent candidate discovery and ranking system designed for the Redrob Hackathon. It matches a pool of candidates against a specified job description for the **Senior AI Engineer — Founding Team** role.
@@ -84,3 +96,49 @@ Expected output:
 Loading candidates...
 Honeypots in Top100: 0
 ```
+
+---
+
+## 🌐 Streamlit Web Interface
+
+A professional Streamlit web interface is available for interactive candidate ranking and discovery. It allows you to dynamically upload custom job descriptions and candidate datasets, run the AI ranking pipeline, inspect the top-ranked candidates, and download the resulting CSV.
+
+### 🛠️ Running Locally
+
+1. Ensure all dependencies (including Streamlit) are installed:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Launch the Streamlit application:
+   ```bash
+   streamlit run app.py
+   ```
+
+3. Open your browser and navigate to `http://localhost:8501`.
+
+4. Upload your job description (in `.md` or `.txt` format) and the candidate profiles (`.jsonl`), select the embedding model, and click **Rank Candidates**.
+
+---
+
+### ☁️ Deploying to Hugging Face Spaces
+
+You can deploy this application to Hugging Face Spaces in just a few steps:
+
+1. **Create a New Space**:
+   - Go to [Hugging Face Spaces](https://huggingface.co/spaces) and click **Create new Space**.
+   - Set a name, choose **Streamlit** as the SDK, and select the owner/visibility.
+
+2. **Commit/Upload Files**:
+   - Upload the following files and directories to the root of your Space repository:
+     * `app.py` (Streamlit entry point)
+     * `requirements.txt` (dependencies list)
+     * `src/` (the entire source code directory containing filters, features, and ranking code)
+     * `rank.py` (command-line script)
+     * `audit_honeypots.py` (honeypot auditor)
+     * `submission_metadata.yaml` (metadata description)
+
+3. **Automatic Deployment**:
+   - Once the files are uploaded, Hugging Face will automatically install the requirements from `requirements.txt` and launch the Streamlit server.
+   - You can access your live deployed application at: `https://huggingface.co/spaces/<your-username>/<your-space-name>`.
+

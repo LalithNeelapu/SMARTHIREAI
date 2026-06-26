@@ -1,4 +1,3 @@
-from docx import Document
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -10,6 +9,14 @@ JD_PATH = (
 
 
 def load_job_description():
+    """Load job description from a .docx file. Requires python-docx."""
+    try:
+        from docx import Document
+    except ImportError:
+        raise ImportError(
+            "python-docx is required to load .docx files. "
+            "Install it with: pip install python-docx"
+        )
     doc = Document(JD_PATH)
     return "\n".join(para.text for para in doc.paragraphs if para.text.strip())
 
