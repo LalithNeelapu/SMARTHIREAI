@@ -8,6 +8,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from candidate_filter import filter_candidates, load_candidates
 from feature_engineering import (
     ai_skill_depth_score,
+    build_corpus_text,
     consulting_penalty,
     evaluation_score,
     open_source_score,
@@ -30,6 +31,19 @@ from submission_generator import save_submission
 EMBED_MODEL = "BAAI/bge-small-en-v1.5"
 FAST_EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
+
+# Module-level model cache to avoid reloading on every run
+_model_cache = {}
+
+
+def get_model(model_name):
+    """Load model once and cache it for subsequent calls."""
+    if model_name not in _model_cache:
+        print(f"Loading embedding model ({model_name})...")
+        _model_cache[model_name] = SentenceTransformer(model_name)
+    else:
+        print(f"Using cached embedding model ({model_name})")
+    return _model_cache[model_name]
 
 
 def build_candidate_text(candidate):
@@ -79,8 +93,8 @@ def run_ranking(
             for candidate in candidates:
                 handle.write(json.dumps(candidate) + "\n")
 
-    print(f"Loading embedding model ({model_name})...")
-    model = SentenceTransformer(model_name)
+    # Use cached model instead of loading fresh each time
+    model = get_model(model_name)
     job_text = load_jd_for_embedding()
     candidate_texts = [build_candidate_text(candidate) for candidate in candidates]
 
@@ -96,25 +110,35 @@ def run_ranking(
     )
     candidate_embeddings = model.encode(
         candidate_texts,
-        batch_size=64,
+        batch_size=256,
         show_progress_bar=show_progress,
         normalize_embeddings=True,
     )
 
+    # Vectorized cosine similarity — single call instead of per-candidate loop
+    print("Computing similarities...")
+    all_similarities = cosine_similarity(
+        job_embedding.reshape(1, -1),
+        candidate_embeddings,
+    )[0]
+
     print("Scoring...")
     results = []
 
-    for candidate, embedding in zip(candidates, candidate_embeddings):
-        semantic = float(cosine_similarity([job_embedding], [embedding])[0][0])
+    for idx, candidate in enumerate(candidates):
+        semantic = float(all_similarities[idx])
+
+        # Pre-compute corpus text once (used by retrieval_score & evaluation_score)
+        corpus_text = build_corpus_text(candidate)
 
         skill = skill_score(candidate)
         experience = experience_score(candidate)
         behavior = behavioral_score(candidate)
-        retrieval = retrieval_score(candidate)
+        retrieval = retrieval_score(candidate, corpus_text=corpus_text)
         vector_db = vector_db_score(candidate)
         company = product_company_score(candidate)
         consulting = consulting_penalty(candidate)
-        evaluation = evaluation_score(candidate)
+        evaluation = evaluation_score(candidate, corpus_text=corpus_text)
         open_source = open_source_score(candidate)
         title_alignment = title_alignment_score(candidate)
         ai_depth = ai_skill_depth_score(candidate)

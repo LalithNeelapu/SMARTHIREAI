@@ -116,8 +116,8 @@ def consulting_penalty(candidate):
     return consulting_count / len(jobs)
 
 
-def retrieval_score(candidate):
-    text = build_corpus_text(candidate)
+def retrieval_score(candidate, corpus_text=None):
+    text = corpus_text if corpus_text is not None else build_corpus_text(candidate)
     matched = sum(1 for term in RETRIEVAL_TERMS if term in text)
     return matched / len(RETRIEVAL_TERMS)
 
@@ -136,8 +136,8 @@ def vector_db_score(candidate):
     return min(score / 3, 1.0)
 
 
-def evaluation_score(candidate):
-    text = build_corpus_text(candidate)
+def evaluation_score(candidate, corpus_text=None):
+    text = corpus_text if corpus_text is not None else build_corpus_text(candidate)
     matched = sum(
         1 for pattern in EVALUATION_PATTERNS
         if re.search(pattern, text)

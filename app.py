@@ -16,8 +16,15 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from ranker import run_ranking
+from ranker import run_ranking, get_model, FAST_EMBED_MODEL, EMBED_MODEL, _model_cache
 import jd_parser
+
+
+@st.cache_resource
+def load_embedding_model(model_name):
+    """Cache the embedding model across Streamlit reruns."""
+    from sentence_transformers import SentenceTransformer
+    return SentenceTransformer(model_name)
 
 
 def local_css():
@@ -179,45 +186,57 @@ def main():
         temp_dir = Path(tempfile.mkdtemp())
         
         try:
-            with st.spinner("⚡ Running the candidate ranking pipeline... This may take up to a few minutes."):
-                # Read uploaded Job Description
-                try:
-                    jd_content = jd_file.read().decode("utf-8")
-                except UnicodeDecodeError:
-                    jd_file.seek(0)
-                    jd_content = jd_file.read().decode("latin-1", errors="ignore")
-                
-                # Write uploaded candidate JSONL file to temp directory
-                temp_candidates_path = temp_dir / "candidates.jsonl"
-                with open(temp_candidates_path, "wb") as f:
-                    f.write(candidates_file.read())
-                
-                temp_output_path = temp_dir / "final_submission.csv"
-                
-                # Monkey-patch the jd_parser loading logic to use the uploaded job description text
-                original_load_jd = jd_parser.load_job_description
-                jd_parser.load_job_description = lambda: jd_content
-                
-                try:
-                    # Map select box option to required model name
-                    model_name = (
-                        "BAAI/bge-small-en-v1.5"
-                        if model_option == "quality"
-                        else "sentence-transformers/all-MiniLM-L6-v2"
-                    )
-                    
-                    # Execute the existing pipeline
-                    submission = run_ranking(
-                        candidates_path=str(temp_candidates_path),
-                        output_path=str(temp_output_path),
-                        show_progress=False,
-                        model_name=model_name
-                    )
-                finally:
-                    # Restore original function regardless of execution outcome
-                    jd_parser.load_job_description = original_load_jd
+            progress_bar = st.progress(0, text="🔄 Initializing pipeline...")
+            status_text = st.empty()
 
-                st.success("🎉 Ranking completed successfully!")
+            # Step 1: Read uploaded Job Description
+            status_text.text("📄 Reading job description...")
+            progress_bar.progress(5, text="📄 Reading job description...")
+            try:
+                jd_content = jd_file.read().decode("utf-8")
+            except UnicodeDecodeError:
+                jd_file.seek(0)
+                jd_content = jd_file.read().decode("latin-1", errors="ignore")
+
+            # Step 2: Write uploaded candidate JSONL file to temp directory
+            status_text.text("📂 Loading candidate data...")
+            progress_bar.progress(10, text="📂 Loading candidate data...")
+            temp_candidates_path = temp_dir / "candidates.jsonl"
+            with open(temp_candidates_path, "wb") as f:
+                f.write(candidates_file.read())
+
+            temp_output_path = temp_dir / "final_submission.csv"
+
+            # Step 3: Pre-load embedding model (cached across reruns)
+            model_name = (
+                EMBED_MODEL if model_option == "quality" else FAST_EMBED_MODEL
+            )
+            status_text.text("🧠 Loading embedding model (cached)...")
+            progress_bar.progress(15, text="🧠 Loading embedding model...")
+            cached_model = load_embedding_model(model_name)
+            # Inject into ranker's cache so run_ranking uses it directly
+            _model_cache[model_name] = cached_model
+
+            # Step 4: Monkey-patch the jd_parser and run the pipeline
+            status_text.text("⚡ Running candidate ranking pipeline...")
+            progress_bar.progress(25, text="⚡ Filtering & embedding candidates...")
+            original_load_jd = jd_parser.load_job_description
+            jd_parser.load_job_description = lambda: jd_content
+
+            try:
+                submission = run_ranking(
+                    candidates_path=str(temp_candidates_path),
+                    output_path=str(temp_output_path),
+                    show_progress=False,
+                    model_name=model_name
+                )
+            finally:
+                # Restore original function regardless of execution outcome
+                jd_parser.load_job_description = original_load_jd
+
+            progress_bar.progress(100, text="✅ Complete!")
+            status_text.empty()
+            st.success("🎉 Ranking completed successfully!")
             
             # Results UI
             st.divider()
