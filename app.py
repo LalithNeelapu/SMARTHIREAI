@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
+import os
 import sys
 from pathlib import Path
 import tempfile
 import shutil
 import traceback
+
+# Force max upload size BEFORE importing Streamlit (needed for HF Spaces)
+os.environ.setdefault("STREAMLIT_SERVER_MAX_UPLOAD_SIZE", "1024")
 
 import streamlit as st
 import pandas as pd
