@@ -133,9 +133,9 @@ def main():
         st.subheader("📁 Upload Data Sources")
         
         jd_file = st.file_uploader(
-            "Job Description (.md or .txt)",
-            type=["md", "txt"],
-            help="Upload the job description file. Markdown formatting is fully parsed."
+            "Job Description (any format)",
+            type=None,
+            help="Upload the job description file in any format (PDF, DOCX, TXT, MD, etc.)."
         )
         
         candidates_file = st.file_uploader(
