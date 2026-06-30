@@ -140,5 +140,6 @@ You can deploy this application to Hugging Face Spaces in just a few steps:
 
 3. **Automatic Deployment**:
    - Once the files are uploaded, Hugging Face will automatically install the requirements from `requirements.txt` and launch the Streamlit server.
-   - You can access your live deployed application at: `https://huggingface.co/spaces/<your-username>/<your-space-name>`.
+   - You can access your live deployed application at: `https://huggingface.co/spaces/vardhan32011/SmartHire`.
+   - Demo video link : `https://drive.google.com/file/d/1pP2FHbynG_5Swdc7i_0KpjIoJHCd_YNp/view?usp=sharing`.
 
